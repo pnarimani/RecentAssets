@@ -1,0 +1,7 @@
+﻿{
+  "name": "RecentAssets",
+  "rootNamespace": "RecentAssets",
+  "includePlatforms": [
+    "Editor"
+  ]
+}

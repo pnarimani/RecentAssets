@@ -1,0 +1,8 @@
+{
+    "name": "com.pnarimani.recent-assets",
+    "displayName": "Recent Assets",
+    "author": { "name": "Peymaan Narimani" },
+    "version": "1.0.0",
+    "license": "MIT",
+    "dependencies": {}
+}
