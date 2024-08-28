@@ -14,16 +14,15 @@ namespace RecentAssets
         private Vector2 _scrollPos;
         private GUIStyle _choiceButtonStyle;
         private GUIStyle _closeButtonStyle;
-
         private RecentAssetsDataController _dataController;
-        private static readonly List<IDisposable> _watchers = new();
-        private static readonly List<IRecentFileClickHandler> _clickHandlers = new()
+        private readonly List<IDisposable> _watchers = new();
+
+        private static readonly IReadOnlyList<IRecentFileClickHandler> _clickHandlers = new List<IRecentFileClickHandler>
         {
             new SceneRecentFileClickHandler(),
             new PrefabRecentFileClickHandler(),
             new GeneralAssetHighlighter(),
         };
-
 
         [MenuItem("Tools/Recent Assets")]
         private static void Init()
