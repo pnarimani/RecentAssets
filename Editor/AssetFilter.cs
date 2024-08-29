@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
-using UnityEngine;
 
 namespace RecentAssets
 {
@@ -11,10 +10,14 @@ namespace RecentAssets
 
         public bool ShouldAdd(string guid)
         {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+
+            if (!IsGameAsset(path))
+                return false;
+
             if (_bannedList.Count == 0)
                 return true;
 
-            var path = AssetDatabase.GUIDToAssetPath(guid);
             var directory = Path.GetDirectoryName(path);
             foreach (var pattern in _bannedList)
             {
@@ -26,6 +29,11 @@ namespace RecentAssets
             }
 
             return true;
+        }
+
+        private static bool IsGameAsset(string path)
+        {
+            return path.StartsWith("Assets") || path.StartsWith("Packages");
         }
     }
 }
