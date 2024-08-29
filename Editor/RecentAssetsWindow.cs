@@ -161,7 +161,7 @@ namespace RecentAssets
             if (!GUILayout.Button(new GUIContent(fileName, icon), _choiceButtonStyle, GUILayout.Height(24)))
                 return;
 
-            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            if (!Application.isPlaying && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                 return;
 
             foreach (var handler in _clickHandlers)
