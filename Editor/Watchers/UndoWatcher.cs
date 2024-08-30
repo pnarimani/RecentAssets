@@ -1,11 +1,10 @@
-﻿using System;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace RecentAssets.Watchers
 {
-    public class UndoWatcher : IDisposable
+    public class UndoWatcher : IWatcher
     {
         private readonly RecentAssetsDataController _controller;
         private readonly RecentAssetsWindow _window;
@@ -49,6 +48,10 @@ namespace RecentAssets.Watchers
         public void Dispose()
         {
             Undo.postprocessModifications -= OnPostprocessModifications;
+        }
+
+        public void OnGUI()
+        {
         }
     }
 }

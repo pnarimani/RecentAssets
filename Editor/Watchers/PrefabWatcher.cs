@@ -4,7 +4,7 @@ using UnityEditor.SceneManagement;
 
 namespace RecentAssets.Watchers
 {
-    public class PrefabWatcher : IDisposable
+    public class PrefabWatcher : IWatcher
     {
         private readonly RecentAssetsDataController _controller;
         private readonly RecentAssetsWindow _window;
@@ -33,6 +33,10 @@ namespace RecentAssets.Watchers
         {
             PrefabStage.prefabStageClosing -= OnStageClosed;
             PrefabStage.prefabStageOpened -= OnStageOpened;
+        }
+
+        public void OnGUI()
+        {
         }
     }
 }

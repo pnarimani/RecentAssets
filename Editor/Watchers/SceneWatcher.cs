@@ -1,12 +1,11 @@
-﻿using System;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace RecentAssets.Watchers
 {
-    public class SceneWatcher : IDisposable
+    public class SceneWatcher : IWatcher
     {
         private readonly RecentAssetsDataController _controller;
         private readonly RecentAssetsWindow _window;
@@ -29,6 +28,10 @@ namespace RecentAssets.Watchers
         public void Dispose()
         {
             EditorSceneManager.sceneClosed -= SceneClosed;
+        }
+
+        public void OnGUI()
+        {
         }
     }
 }

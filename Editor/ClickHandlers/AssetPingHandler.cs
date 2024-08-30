@@ -1,21 +1,20 @@
 ﻿using UnityEditor;
-using UnityEditor.SceneManagement;
 
 namespace RecentAssets.ClickHandlers
 {
-    public class SceneRecentFileClickHandler : IRecentFileClickHandler
+    public class AssetPingHandler
     {
-        public bool TryHandle(RecentFile file)
+        public bool Ping(RecentFile file)
         {
             var path = AssetDatabase.GUIDToAssetPath(file.Guid);
             if (string.IsNullOrEmpty(path))
                 return false;
             
-            var scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(path);
-            if (scene == null)
+            var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
+            if (obj == null)
                 return false;
             
-            EditorSceneManager.OpenScene(path);
+            EditorGUIUtility.PingObject(obj);
             return true;
         }
     }

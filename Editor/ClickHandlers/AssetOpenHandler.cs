@@ -3,15 +3,15 @@ using UnityEngine;
 
 namespace RecentAssets.ClickHandlers
 {
-    public class PrefabRecentFileClickHandler : IRecentFileClickHandler
+    public class AssetOpenHandler
     {
-        public bool TryHandle(RecentFile file)
+        public bool Open(RecentFile file)
         {
             var path = AssetDatabase.GUIDToAssetPath(file.Guid);
             if (string.IsNullOrEmpty(path))
                 return false;
             
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            var prefab = AssetDatabase.LoadAssetAtPath<Object>(path);
             if (prefab == null)
                 return false;
             

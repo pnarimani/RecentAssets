@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using RecentAssets.ClickHandlers;
 using RecentAssets.Watchers;
@@ -15,15 +14,10 @@ namespace RecentAssets
         private GUIStyle _choiceButtonStyle;
         private GUIStyle _closeButtonStyle;
         private RecentAssetsDataController _dataController;
-        private readonly List<IDisposable> _watchers = new();
-
-        private static readonly IReadOnlyList<IRecentFileClickHandler> _clickHandlers = new List<IRecentFileClickHandler>
-        {
-            new SceneRecentFileClickHandler(),
-            new PrefabRecentFileClickHandler(),
-            new GeneralAssetHighlighter(),
-        };
-
+        private readonly AssetOpenHandler _assetOpenHandler = new();
+        private readonly AssetPingHandler _assetPingHandler = new();
+        private readonly List<IWatcher> _watchers = new();
+        
         [MenuItem("Tools/Recent Assets")]
         private static void Init()
         {
@@ -40,6 +34,7 @@ namespace RecentAssets
             _watchers.Add(new SceneWatcher(_dataController, this));
             _watchers.Add(new PrefabWatcher(_dataController, this));
             _watchers.Add(new UndoWatcher(_dataController, this));
+            _watchers.Add(new DragAndDropWatcher(_dataController));
         }
 
         private void OnDisable()
@@ -54,6 +49,9 @@ namespace RecentAssets
         private void OnGUI()
         {
             InitializeStyles();
+            
+            foreach (var watcher in _watchers)
+                watcher.OnGUI();
 
             _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
             
@@ -119,6 +117,7 @@ namespace RecentAssets
                 EditorGUI.BeginDisabledGroup(true);
 
             DrawFileButton(file);
+            DrawPingButton(file);
             DrawPinButton(file);
             DrawRemoveButton(file);
 
@@ -151,6 +150,16 @@ namespace RecentAssets
                 Repaint();
             }
         }
+        
+        private void DrawPingButton(RecentFile file)
+        {
+            var icon = EditorGUIUtility.IconContent("PlayButton On");
+            GUI.backgroundColor = Color.white;
+            if (GUILayout.Button(icon, _closeButtonStyle, GUILayout.Width(24), GUILayout.Height(24)))
+            {
+                _assetPingHandler.Ping(file);
+            }
+        }
 
         private void DrawFileButton(RecentFile file)
         {
@@ -158,17 +167,8 @@ namespace RecentAssets
             var fileName = AssetDatabase.LoadAssetAtPath<Object>(path).name;
             var icon = AssetDatabase.GetCachedIcon(path);
 
-            if (!GUILayout.Button(new GUIContent(fileName, icon), _choiceButtonStyle, GUILayout.Height(24)))
-                return;
-
-            if (!Application.isPlaying && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
-                return;
-
-            foreach (var handler in _clickHandlers)
-            {
-                if (handler.TryHandle(file))
-                    break;
-            }
+            if (GUILayout.Button(new GUIContent(fileName, icon), _choiceButtonStyle, GUILayout.Height(24)))
+                _assetOpenHandler.Open(file);
         }
 
         public void Reload()
