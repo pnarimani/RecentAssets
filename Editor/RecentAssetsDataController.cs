@@ -90,7 +90,7 @@ namespace RecentAssets
         {
             var maxFiles = RecentAssetsPreferences.MaxRecentAssets + _files.Count(a => a.IsPinned);
             var extra = Mathf.Max(0, _files.Count - maxFiles);
-            for (var i = _files.Count - 1; i >= 0; i--)
+            for (var i = 0; i < _files.Count; i++)
             {
                 if (extra == 0)
                     break;
@@ -99,6 +99,7 @@ namespace RecentAssets
                 {
                     _files.RemoveAt(i);
                     extra--;
+                    i--;
                 }
             }
         }
