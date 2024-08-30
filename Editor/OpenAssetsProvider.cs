@@ -7,18 +7,16 @@ namespace RecentAssets
 {
     public static class OpenAssetsProvider
     {
-        public static List<string> GetOpenAssets()
+        public static void UpdateOpenAssets(List<string> result)
         {
-            var result = new List<string>();
-
+            result.Clear();
+            
             var stage = PrefabStageUtility.GetCurrentPrefabStage();
             if (stage != null)
                 result.Add(AssetDatabase.AssetPathToGUID(stage.assetPath));
 
             for (var index = 0; index < SceneManager.sceneCount; index++)
                 result.Add(AssetDatabase.AssetPathToGUID(SceneManager.GetSceneAt(index).path));
-
-            return result;
         }
     }
 }

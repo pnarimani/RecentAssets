@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using RecentAssets.ClickHandlers;
 using RecentAssets.Watchers;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -17,7 +16,8 @@ namespace RecentAssets
         private readonly AssetOpenHandler _assetOpenHandler = new();
         private readonly AssetPingHandler _assetPingHandler = new();
         private readonly List<IWatcher> _watchers = new();
-        
+        private readonly List<string> _openAssets = new();
+
         [MenuItem("Tools/Recent Assets")]
         private static void Init()
         {
@@ -92,7 +92,7 @@ namespace RecentAssets
 
         private void DrawAllFiles(bool drawPinned)
         {
-            var presentAssets = OpenAssetsProvider.GetOpenAssets();
+            OpenAssetsProvider.UpdateOpenAssets(_openAssets);
 
             var lastIconSize = EditorGUIUtility.GetIconSize();
             EditorGUIUtility.SetIconSize(new Vector2(15, 15));
@@ -103,25 +103,21 @@ namespace RecentAssets
                 var file = files[i];
                 if (file.IsPinned != drawPinned)
                     continue;
-                DrawFileRow(file, presentAssets);
+                DrawFileRow(file);
             }
 
             EditorGUIUtility.SetIconSize(lastIconSize);
         }
 
-        private void DrawFileRow(RecentFile file, List<string> presentAssets)
+        private void DrawFileRow(RecentFile file)
         {
             EditorGUILayout.BeginHorizontal();
-
-            if (presentAssets.Contains(file.Guid))
-                EditorGUI.BeginDisabledGroup(true);
 
             DrawFileButton(file);
             DrawPingButton(file);
             DrawPinButton(file);
             DrawRemoveButton(file);
 
-            EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
         }
 
@@ -166,9 +162,14 @@ namespace RecentAssets
             var path = AssetDatabase.GUIDToAssetPath(file.Guid);
             var fileName = AssetDatabase.LoadAssetAtPath<Object>(path).name;
             var icon = AssetDatabase.GetCachedIcon(path);
-
+            
+            if (_openAssets.Contains(file.Guid))
+                EditorGUI.BeginDisabledGroup(true);
+            
             if (GUILayout.Button(new GUIContent(fileName, icon), _choiceButtonStyle, GUILayout.Height(24)))
                 _assetOpenHandler.Open(file);
+            
+            EditorGUI.EndDisabledGroup();
         }
 
         public void Reload()
