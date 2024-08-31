@@ -166,7 +166,7 @@ namespace RecentAssets
             if (_openAssets.Contains(file.Guid))
                 EditorGUI.BeginDisabledGroup(true);
             
-            if (GUILayout.Button(new GUIContent(fileName, icon), _choiceButtonStyle, GUILayout.Height(24)))
+            if (GUILayout.Button(new GUIContent(fileName, icon), _choiceButtonStyle, GUILayout.Height(24), GUILayout.MinWidth(50)))
                 _assetOpenHandler.Open(file);
             
             EditorGUI.EndDisabledGroup();
