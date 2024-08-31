@@ -42,8 +42,13 @@ namespace RecentAssets
 
         private static bool IsInvalidAsset(RecentFile s)
         {
-            return string.IsNullOrEmpty(s.Guid) ||
-                   string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(s.Guid));
+            if (string.IsNullOrEmpty(s.Guid))
+                return true;
+            var path = AssetDatabase.GUIDToAssetPath(s.Guid);
+            if (string.IsNullOrEmpty(path))
+                return true;
+            var guid = AssetDatabase.AssetPathToGUID(path, AssetPathToGUIDOptions.OnlyExistingAssets);
+            return guid != s.Guid;
         }
 
         public void Remove(RecentFile file)
