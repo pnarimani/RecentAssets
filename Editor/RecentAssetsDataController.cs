@@ -68,9 +68,9 @@ namespace RecentAssets
             }
         }
 
-        public void Pin(RecentFile file)
+        public void TogglePin(RecentFile file)
         {
-            file.IsPinned = true;
+            file.IsPinned = !file.IsPinned;
         }
 
         public void AddRecentItem(string guid, bool isPinned)

@@ -142,7 +142,7 @@ namespace RecentAssets
             GUI.backgroundColor = file.IsPinned ? new Color(0, 1, 0, 0.4f) : Color.white;
             if (GUILayout.Button(icon, _closeButtonStyle, GUILayout.Width(24), GUILayout.Height(24)))
             {
-                _dataController.Pin(file);
+                _dataController.TogglePin(file);
                 Repaint();
             }
         }
