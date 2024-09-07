@@ -7,7 +7,7 @@ namespace RecentAssets
 {
     public class RecentAssetsDataController
     {
-        private const string ListPersistenceKey = "RecentAssets_RecentFiles";
+        private string ListPersistenceKey { get; } = $"RecentAssets_{Application.dataPath.GetHashCode()}_RecentFiles";
 
         private readonly AssetFilter _filter = new();
         private readonly List<RecentFile> _files;
