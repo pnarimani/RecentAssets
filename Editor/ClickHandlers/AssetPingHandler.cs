@@ -4,18 +4,17 @@ namespace RecentAssets.ClickHandlers
 {
     public class AssetPingHandler
     {
-        public bool Ping(RecentFile file)
+        public static void Ping(RecentFile file)
         {
             var path = AssetDatabase.GUIDToAssetPath(file.Guid);
             if (string.IsNullOrEmpty(path))
-                return false;
-            
+                return;
+
             var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
             if (obj == null)
-                return false;
-            
+                return;
+
             EditorGUIUtility.PingObject(obj);
-            return true;
         }
     }
 }

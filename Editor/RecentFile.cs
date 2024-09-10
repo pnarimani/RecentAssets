@@ -6,7 +6,6 @@ namespace RecentAssets
     public class RecentFile : IEquatable<RecentFile>
     {
         public string Guid;
-        public bool IsPinned;
 
         public bool Equals(RecentFile other)
         {

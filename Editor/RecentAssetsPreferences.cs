@@ -19,7 +19,7 @@ namespace RecentAssets
 
         public static int MaxRecentAssets
         {
-            get => EditorPrefs.GetInt($"{Prefix}{nameof(MaxRecentAssets)}", 10);
+            get => Mathf.Max(0, EditorPrefs.GetInt($"{Prefix}{nameof(MaxRecentAssets)}", 10));
             set => EditorPrefs.SetInt($"{Prefix}{nameof(MaxRecentAssets)}", value);
         }
 
@@ -29,7 +29,7 @@ namespace RecentAssets
 
             var window = EditorWindow.GetWindow<RecentAssetsWindow>();
             if (window != null)
-                window.Reload();
+                window.Refresh();
         }
 
         public override void OnGUI(string searchContext)

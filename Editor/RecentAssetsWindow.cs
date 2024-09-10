@@ -1,21 +1,24 @@
+using System;
 using System.Collections.Generic;
 using RecentAssets.ClickHandlers;
 using RecentAssets.Watchers;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace RecentAssets
 {
     public class RecentAssetsWindow : EditorWindow
     {
-        private Vector2 _scrollPos;
-        private GUIStyle _choiceButtonStyle;
-        private GUIStyle _closeButtonStyle;
+        private const string ActionButtonClass = "ActionButton";
+
+        [SerializeField] private StyleSheet _styleSheet;
+
         private RecentAssetsDataController _dataController;
-        private readonly AssetOpenHandler _assetOpenHandler = new();
-        private readonly AssetPingHandler _assetPingHandler = new();
-        private readonly List<IWatcher> _watchers = new();
+        
+        private DragAndDropManipulator _manipulator;
+        private readonly List<IDisposable> _watchers = new();
         private readonly List<string> _openAssets = new();
 
         [MenuItem("Tools/Recent Assets")]
@@ -34,7 +37,6 @@ namespace RecentAssets
             _watchers.Add(new SceneWatcher(_dataController, this));
             _watchers.Add(new PrefabWatcher(_dataController, this));
             _watchers.Add(new UndoWatcher(_dataController, this));
-            _watchers.Add(new DragAndDropWatcher(_dataController));
         }
 
         private void OnDisable()
@@ -46,136 +48,128 @@ namespace RecentAssets
             _watchers.Clear();
         }
 
-        private void OnGUI()
+        private void CreateGUI()
         {
-            InitializeStyles();
-            
-            foreach (var watcher in _watchers)
-                watcher.OnGUI();
+            rootVisualElement.Clear();
+            rootVisualElement.styleSheets.Add(_styleSheet);
 
-            _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
-            
-            DrawAllFiles(true);
-            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-            DrawAllFiles(false);
+            var pinnedList = CreateListView(_dataController.Data.PinnedFiles);
+            pinnedList.reorderable = true;
+            var recentList = CreateListView(_dataController.Data.RecentFiles);
+            recentList.name = "recent-list";
+            rootVisualElement.Add(pinnedList);
+            rootVisualElement.Add(new VisualElement { name = "Separator" });
+            rootVisualElement.Add(recentList);
+            rootVisualElement.Add(new VisualElement { name = "Separator" });
+            rootVisualElement.Add(new Button(OnClearClicked) { name = "clear", text = "CLEAR" });
 
-            EditorGUILayout.EndScrollView();
-            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-
-            DrawClearButton();
+            pinnedList.AddManipulator(new DragAndDropManipulator(this, _dataController));
+            recentList.AddManipulator(new DragAndDropManipulator(this, _dataController));
         }
 
-        private void InitializeStyles()
+        private ListView CreateListView(List<RecentFile> source)
         {
-            _closeButtonStyle = new GUIStyle(GUI.skin.button)
+            return new ListView(source)
             {
-                padding = new RectOffset(0, 0, 0, 0),
-            };
-
-            _choiceButtonStyle = new GUIStyle(GUI.skin.button)
-            {
-                alignment = TextAnchor.MiddleLeft,
+                selectionType = SelectionType.None,
+                fixedItemHeight = 26,
+                makeItem = CreateListItemView,
+                bindItem = BindListItemView(source),
             };
         }
 
-        private void DrawClearButton()
+        private Action<VisualElement, int> BindListItemView(List<RecentFile> list)
         {
-            GUI.backgroundColor = new Color(1, 0, 0, 0.4f);
-            if (GUILayout.Button(new GUIContent("CLEAR RECENT"), GUILayout.Height(24)))
+            return (element, i) =>
             {
-                _dataController.DeleteRecentFiles();
-                Repaint();
-            }
-
-            GUI.backgroundColor = Color.white;
+                var file = list[i];
+                element.Q<Button>("open").userData = file;
+                element.Q<Button>("remove").userData = file;
+                element.Q<Button>("ping").userData = file;
+                UpdateOpenButton(file, element);
+                UpdatePinButton(file, element);
+            };
         }
 
-        private void DrawAllFiles(bool drawPinned)
+        private void UpdatePinButton(RecentFile file, VisualElement element)
         {
-            OpenAssetsProvider.UpdateOpenAssets(_openAssets);
-
-            var lastIconSize = EditorGUIUtility.GetIconSize();
-            EditorGUIUtility.SetIconSize(new Vector2(15, 15));
-
-            var files = _dataController.GetFiles();
-            for (var i = files.Count - 1; i >= 0; i--)
-            {
-                var file = files[i];
-                if (file.IsPinned != drawPinned)
-                    continue;
-                DrawFileRow(file);
-            }
-
-            EditorGUIUtility.SetIconSize(lastIconSize);
+            var pinButton = element.Q<Button>("pin");
+            if (_dataController.IsPinned(file))
+                pinButton.AddToClassList("pinned");
+            else
+                pinButton.RemoveFromClassList("pinned");
+            pinButton.userData = file;
         }
 
-        private void DrawFileRow(RecentFile file)
-        {
-            EditorGUILayout.BeginHorizontal();
-
-            DrawFileButton(file);
-            DrawPingButton(file);
-            DrawPinButton(file);
-            DrawRemoveButton(file);
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        private void DrawRemoveButton(RecentFile file)
-        {
-            GUI.backgroundColor = new Color(1, 0, 0, 0.4f);
-            var icon = EditorGUIUtility.IconContent("d_winbtn_win_close");
-            if (GUILayout.Button(icon, _closeButtonStyle, GUILayout.Width(24), GUILayout.Height(24)))
-            {
-                _dataController.Remove(file);
-                Repaint();
-            }
-
-            GUI.backgroundColor = Color.white;
-        }
-
-        private void DrawPinButton(RecentFile file)
-        {
-            var icon = file.IsPinned
-                ? EditorGUIUtility.IconContent("pinned")
-                : EditorGUIUtility.IconContent("pin");
-            GUI.backgroundColor = file.IsPinned ? new Color(0, 1, 0, 0.4f) : Color.white;
-            if (GUILayout.Button(icon, _closeButtonStyle, GUILayout.Width(24), GUILayout.Height(24)))
-            {
-                _dataController.TogglePin(file);
-                Repaint();
-            }
-        }
-        
-        private void DrawPingButton(RecentFile file)
-        {
-            var icon = EditorGUIUtility.IconContent("PlayButton On");
-            GUI.backgroundColor = Color.white;
-            if (GUILayout.Button(icon, _closeButtonStyle, GUILayout.Width(24), GUILayout.Height(24)))
-            {
-                _assetPingHandler.Ping(file);
-            }
-        }
-
-        private void DrawFileButton(RecentFile file)
+        private void UpdateOpenButton(RecentFile file, VisualElement element)
         {
             var path = AssetDatabase.GUIDToAssetPath(file.Guid);
-            var fileName = AssetDatabase.LoadAssetAtPath<Object>(path).name;
-            var icon = AssetDatabase.GetCachedIcon(path);
-            
-            if (_openAssets.Contains(file.Guid))
-                EditorGUI.BeginDisabledGroup(true);
-            
-            if (GUILayout.Button(new GUIContent(fileName, icon), _choiceButtonStyle, GUILayout.Height(24), GUILayout.MinWidth(50)))
-                _assetOpenHandler.Open(file);
-            
-            EditorGUI.EndDisabledGroup();
+            var open = element.Q<Button>("open");
+            open.SetEnabled(!_openAssets.Contains(file.Guid));
+            open.userData = file;
+            open.text = AssetDatabase.LoadAssetAtPath<Object>(path).name;
+            open.Q<Image>().image = AssetDatabase.GetCachedIcon(path);
         }
 
-        public void Reload()
+        private VisualElement CreateListItemView()
         {
-            OnDisable();
-            OnEnable();
+            var open = new Button { name = "open" };
+            open.Add(new Image());
+            open.clicked += () => OnOpenClicked(open);
+
+            var ping = new Button { name = "ping" };
+            ping.AddToClassList(ActionButtonClass);
+            ping.clicked += () => OnPingClicked(ping);
+
+            var pin = new Button { name = "pin" };
+            pin.AddToClassList(ActionButtonClass);
+            pin.clicked += () => OnPinClicked(pin);
+
+            var remove = new Button { name = "remove" };
+            remove.AddToClassList(ActionButtonClass);
+            remove.clicked += () => OnRemoveClicked(remove);
+
+            var root = new VisualElement { style = { flexDirection = FlexDirection.Row } };
+            root.Add(open);
+            root.Add(ping);
+            root.Add(pin);
+            root.Add(remove);
+            return root;
+        }
+
+        private void OnPingClicked(Button button)
+        {
+            AssetPingHandler.Ping((RecentFile)button.userData);
+        }
+
+        private void OnOpenClicked(Button button)
+        {
+            AssetOpenHandler.Open((RecentFile)button.userData);
+        }
+
+        private void OnPinClicked(Button button)
+        {
+            _dataController.TogglePin((RecentFile)button.userData);
+            Refresh();
+        }
+
+        private void OnRemoveClicked(Button button)
+        {
+            _dataController.Remove(((RecentFile)button.userData).Guid);
+            Refresh();
+        }
+
+        private void OnClearClicked()
+        {
+            _dataController.Clear();
+            Refresh();
+        }
+
+        public void Refresh()
+        {
+            OpenAssetsProvider.UpdateOpenAssets(_openAssets);
+            _dataController.RemoveInvalidFiles();
+            rootVisualElement.Query<ListView>().ForEach(list => list.Rebuild());
         }
     }
 }

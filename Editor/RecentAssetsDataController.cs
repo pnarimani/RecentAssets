@@ -1,43 +1,26 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
-using UnityEngine;
+﻿using UnityEditor;
 
 namespace RecentAssets
 {
     public class RecentAssetsDataController
     {
-        private string ListPersistenceKey { get; } = $"RecentAssets_{Application.dataPath.GetHashCode()}_RecentFiles";
-
         private readonly AssetFilter _filter = new();
-        private readonly List<RecentFile> _files;
-
-        public RecentAssetsDataController()
-        {
-            var json = EditorPrefs.GetString(ListPersistenceKey, "{}");
-            _files = JsonUtility.FromJson<WrappedList<RecentFile>>(json).List;
-        }
+        public RecentAssetsData Data { get; } = new();
 
         public void Save()
         {
-            var json = JsonUtility.ToJson(new WrappedList<RecentFile> { List = _files });
-            EditorPrefs.SetString(ListPersistenceKey, json);
+            Data.Save();
         }
 
-        public IReadOnlyList<RecentFile> GetFiles()
+        public void RemoveInvalidFiles()
         {
-            _files.RemoveAll(IsInvalidAsset);
-            return _files;
+            Data.PinnedFiles.RemoveAll(IsInvalidAsset);
+            Data.RecentFiles.RemoveAll(IsInvalidAsset);
         }
 
-        public void DeleteRecentFiles()
+        public void Clear()
         {
-            for (var i = _files.Count - 1; i >= 0; i--)
-            {
-                if (_files[i].IsPinned)
-                    continue;
-                _files.RemoveAt(i);
-            }
+            Data.RecentFiles.Clear();
         }
 
         private static bool IsInvalidAsset(RecentFile s)
@@ -51,62 +34,51 @@ namespace RecentAssets
             return guid != s.Guid;
         }
 
-        public void Remove(RecentFile file)
+        public void Remove(string guid)
         {
-            Remove(file.Guid);
-        }
-
-        private void Remove(string guid)
-        {
-            for (var i = _files.Count - 1; i >= 0; i--)
-            {
-                if (_files[i].Guid == guid)
-                {
-                    _files.RemoveAt(i);
-                    break;
-                }
-            }
+            Data.RecentFiles.RemoveAll(x => x.Guid == guid);
+            Data.PinnedFiles.RemoveAll(x => x.Guid == guid);
         }
 
         public void TogglePin(RecentFile file)
         {
-            file.IsPinned = !file.IsPinned;
+            if (IsPinned(file))
+            {
+                Data.PinnedFiles.Remove(file);
+                Data.RecentFiles.Add(file);
+            }
+            else
+            {
+                Data.RecentFiles.Remove(file);
+                Data.PinnedFiles.Add(file);
+            }
         }
 
-        public void AddRecentItem(string guid, bool isPinned)
+        public bool IsPinned(RecentFile file)
         {
-            if (!_filter.ShouldAdd(guid))
+            return Data.PinnedFiles.Contains(file);
+        }
+
+        public void AddRecentItem(RecentFile file, bool force)
+        {
+            if (!force && !_filter.ShouldAdd(file.Guid))
                 return;
 
-            if (_files.Any(s => s.Guid == guid && s.IsPinned))
+            if (Data.PinnedFiles.Contains(file))
                 return;
 
-            Remove(guid);
-            _files.Add(new RecentFile
-            {
-                Guid = guid,
-                IsPinned = isPinned,
-            });
-
+            Data.RecentFiles.Remove(file);
+            Data.RecentFiles.Insert(0, file);
+            
             RemoveExtraFiles();
+            Save();
         }
 
         private void RemoveExtraFiles()
         {
-            var maxFiles = RecentAssetsPreferences.MaxRecentAssets + _files.Count(a => a.IsPinned);
-            var extra = Mathf.Max(0, _files.Count - maxFiles);
-            for (var i = 0; i < _files.Count; i++)
-            {
-                if (extra == 0)
-                    break;
-
-                if (!_files[i].IsPinned)
-                {
-                    _files.RemoveAt(i);
-                    extra--;
-                    i--;
-                }
-            }
+            var files = Data.RecentFiles;
+            while(files.Count > RecentAssetsPreferences.MaxRecentAssets)
+                files.RemoveAt(files.Count - 1);
         }
     }
 }

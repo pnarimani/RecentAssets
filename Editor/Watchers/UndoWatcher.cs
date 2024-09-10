@@ -1,10 +1,11 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace RecentAssets.Watchers
 {
-    public class UndoWatcher : IWatcher
+    public class UndoWatcher : IDisposable
     {
         private readonly RecentAssetsDataController _controller;
         private readonly RecentAssetsWindow _window;
@@ -27,10 +28,10 @@ namespace RecentAssets.Watchers
                 var guid = AssetDatabase.AssetPathToGUID(path);
                 if (string.IsNullOrEmpty(guid))
                     continue;
-                _controller.AddRecentItem(guid, false);
+                _controller.AddRecentItem(new RecentFile { Guid = guid }, false);
             }
 
-            _window.Repaint();
+            _window.Refresh();
 
             return modifications;
         }
@@ -48,10 +49,6 @@ namespace RecentAssets.Watchers
         public void Dispose()
         {
             Undo.postprocessModifications -= OnPostprocessModifications;
-        }
-
-        public void OnGUI()
-        {
         }
     }
 }

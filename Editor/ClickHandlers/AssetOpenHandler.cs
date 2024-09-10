@@ -5,18 +5,17 @@ namespace RecentAssets.ClickHandlers
 {
     public class AssetOpenHandler
     {
-        public bool Open(RecentFile file)
+        public static void Open(RecentFile file)
         {
             var path = AssetDatabase.GUIDToAssetPath(file.Guid);
             if (string.IsNullOrEmpty(path))
-                return false;
-            
+                return;
+
             var prefab = AssetDatabase.LoadAssetAtPath<Object>(path);
             if (prefab == null)
-                return false;
-            
+                return;
+
             AssetDatabase.OpenAsset(prefab);
-            return true;
         }
     }
 }

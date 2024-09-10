@@ -1,0 +1,73 @@
+:root {
+    --item-height: 24px;
+    --icon-offset: -24px;
+}
+
+Button {
+    margin: 1px;
+    height: var(--item-height);
+}
+
+ListView {
+    margin: 4px;
+}
+
+#recent-list {
+    flex-grow: 1;
+}
+
+#unity-list-view__reorderable-item__container {
+    padding-left: 2px;
+    padding-right: 0;
+}
+
+#Separator {
+    border-top-width: 3px;
+    border-top-color: #999999;
+    margin-top: 2px;
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+.ActionButton {
+    background-size: 16px 16px;
+    width: var(--item-height);
+}
+
+#open {
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+    align-content: flex-start;
+    padding-left: var(--item-height);
+}
+
+#open > Image {
+    width: var(--item-height);
+    height: var(--item-height);
+    padding: 2px;
+    translate: var(--icon-offset) 0;
+}
+
+#remove {
+    background-color: rgba(255, 0, 0, 0.2);
+    background-image: resource("d_winbtn_win_close");
+}
+
+#clear {
+    background-color: rgba(255, 0, 0, 0.2);
+    margin: 4px;
+}
+
+#pin {
+    background-color: var(--unity-colors-button-background);
+    background-image: resource("pin");
+}
+
+#pin.pinned {
+    background-color: rgba(0, 255, 0, 0.2);
+    background-image: resource("pinned");
+}
+
+#ping {
+    background-image: resource("PlayButton On");
+}

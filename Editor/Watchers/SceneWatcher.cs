@@ -1,11 +1,12 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace RecentAssets.Watchers
 {
-    public class SceneWatcher : IWatcher
+    public class SceneWatcher : IDisposable
     {
         private readonly RecentAssetsDataController _controller;
         private readonly RecentAssetsWindow _window;
@@ -21,17 +22,13 @@ namespace RecentAssets.Watchers
         {
             if (Application.isPlaying) return;
             var guid = AssetDatabase.AssetPathToGUID(scene.path);
-            _controller.AddRecentItem(guid, false);
-            _window.Repaint();
+            _controller.AddRecentItem(new RecentFile { Guid = guid }, false);
+            _window.Refresh();
         }
 
         public void Dispose()
         {
             EditorSceneManager.sceneClosed -= SceneClosed;
-        }
-
-        public void OnGUI()
-        {
         }
     }
 }
