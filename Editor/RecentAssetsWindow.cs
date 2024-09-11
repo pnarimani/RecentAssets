@@ -65,6 +65,7 @@ namespace RecentAssets
 
             pinnedList.AddManipulator(new DragAndDropManipulator(this, _dataController));
             recentList.AddManipulator(new DragAndDropManipulator(this, _dataController));
+            rootVisualElement.AddManipulator(new DragAndDropManipulator(this, _dataController));
         }
 
         private ListView CreateListView(List<RecentFile> source)

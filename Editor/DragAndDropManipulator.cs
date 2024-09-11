@@ -42,6 +42,8 @@ namespace RecentAssets
                 _controller.AddRecentItem(file, true);
                 _controller.TogglePin(file);
             }
+            
+            DragAndDrop.AcceptDrag();
             _window.Refresh();
         }
     }
