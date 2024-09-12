@@ -49,7 +49,7 @@ ListView {
 
 #remove {
     background-color: rgba(255, 0, 0, 0.2);
-    background-image: resource("d_winbtn_win_close");
+    background-image: resource("CrossIcon");
 }
 
 #clear {
@@ -68,5 +68,5 @@ ListView {
 }
 
 #ping {
-    background-image: resource("PlayButton On");
+    background-image: resource("d_Animation.FilterBySelection");
 }
