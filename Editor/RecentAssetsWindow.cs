@@ -37,6 +37,8 @@ namespace RecentAssets
             _watchers.Add(new SceneWatcher(_dataController, this));
             _watchers.Add(new PrefabWatcher(_dataController, this));
             _watchers.Add(new UndoWatcher(_dataController, this));
+            
+            OpenAssetsProvider.UpdateOpenAssets(_openAssets);
         }
 
         private void OnDisable()
@@ -53,30 +55,27 @@ namespace RecentAssets
             rootVisualElement.Clear();
             rootVisualElement.styleSheets.Add(_styleSheet);
 
-            var pinnedList = CreateListView(_dataController.Data.PinnedFiles);
-            pinnedList.reorderable = true;
-            var recentList = CreateListView(_dataController.Data.RecentFiles);
-            recentList.name = "recent-list";
-            rootVisualElement.Add(pinnedList);
+            rootVisualElement.Add(CreateListView(_dataController.Data.PinnedFiles, "pinned-list"));
             rootVisualElement.Add(new VisualElement { name = "Separator" });
-            rootVisualElement.Add(recentList);
+            rootVisualElement.Add(CreateListView(_dataController.Data.RecentFiles, "recent-list"));
             rootVisualElement.Add(new VisualElement { name = "Separator" });
             rootVisualElement.Add(new Button(OnClearClicked) { name = "clear", text = "CLEAR" });
 
-            pinnedList.AddManipulator(new DragAndDropManipulator(this, _dataController));
-            recentList.AddManipulator(new DragAndDropManipulator(this, _dataController));
             rootVisualElement.AddManipulator(new DragAndDropManipulator(this, _dataController));
         }
 
-        private ListView CreateListView(List<RecentFile> source)
+        private ListView CreateListView(List<RecentFile> source, string name)
         {
-            return new ListView(source)
+            var listView = new ListView(source)
             {
+                name = name,
                 selectionType = SelectionType.None,
                 fixedItemHeight = 26,
                 makeItem = CreateListItemView,
                 bindItem = BindListItemView(source),
             };
+            listView.AddManipulator(new DragAndDropManipulator(this, _dataController));
+            return listView;
         }
 
         private Action<VisualElement, int> BindListItemView(List<RecentFile> list)
@@ -84,7 +83,6 @@ namespace RecentAssets
             return (element, i) =>
             {
                 var file = list[i];
-                element.Q<Button>("open").userData = file;
                 element.Q<Button>("remove").userData = file;
                 element.Q<Button>("ping").userData = file;
                 UpdateOpenButton(file, element);
@@ -105,18 +103,20 @@ namespace RecentAssets
         private void UpdateOpenButton(RecentFile file, VisualElement element)
         {
             var path = AssetDatabase.GUIDToAssetPath(file.Guid);
-            var open = element.Q<Button>("open");
+            var open = element.Q<VisualElement>("open");
             open.SetEnabled(!_openAssets.Contains(file.Guid));
             open.userData = file;
-            open.text = AssetDatabase.LoadAssetAtPath<Object>(path).name;
+            open.Q<Label>().text = AssetDatabase.LoadAssetAtPath<Object>(path).name;
             open.Q<Image>().image = AssetDatabase.GetCachedIcon(path);
         }
 
         private VisualElement CreateListItemView()
         {
-            var open = new Button { name = "open" };
+            var open = new VisualElement() { name = "open" };
+            open.AddToClassList("unity-button");
             open.Add(new Image());
-            open.clicked += () => OnOpenClicked(open);
+            open.Add(new Label());
+            open.AddManipulator(new FileButtonManipulator());
 
             var ping = new Button { name = "ping" };
             ping.AddToClassList(ActionButtonClass);
@@ -125,7 +125,7 @@ namespace RecentAssets
             var pin = new Button { name = "pin" };
             pin.AddToClassList(ActionButtonClass);
             pin.clicked += () => OnPinClicked(pin);
-
+ 
             var remove = new Button { name = "remove" };
             remove.AddToClassList(ActionButtonClass);
             remove.clicked += () => OnRemoveClicked(remove);
@@ -141,11 +141,6 @@ namespace RecentAssets
         private void OnPingClicked(Button button)
         {
             AssetPingHandler.Ping((RecentFile)button.userData);
-        }
-
-        private void OnOpenClicked(Button button)
-        {
-            AssetOpenHandler.Open((RecentFile)button.userData);
         }
 
         private void OnPinClicked(Button button)

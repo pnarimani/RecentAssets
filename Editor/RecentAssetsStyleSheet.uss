@@ -1,6 +1,5 @@
 :root {
     --item-height: 24px;
-    --icon-offset: -24px;
 }
 
 Button {
@@ -37,15 +36,15 @@ ListView {
 #open {
     flex-grow: 1;
     -unity-text-align: middle-left;
-    align-content: flex-start;
-    padding-left: var(--item-height);
+    flex-direction: row;
+    align-items: center;
+    margin: 1px;
+    height: var(--item-height);
 }
 
 #open > Image {
-    width: var(--item-height);
-    height: var(--item-height);
-    padding: 2px;
-    translate: var(--icon-offset) 0;
+    width: 16px;
+    height: 16px;
 }
 
 #remove {
