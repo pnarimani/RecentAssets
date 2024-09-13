@@ -15,6 +15,11 @@ ListView {
     flex-grow: 1;
 }
 
+#pinned-list {
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
 #unity-list-view__reorderable-item__container {
     padding-left: 2px;
     padding-right: 0;
